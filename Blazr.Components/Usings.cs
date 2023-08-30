@@ -1,4 +1,5 @@
 ﻿global using Blazr.BaseComponents;
+global using Blazr.Presentation;
 
 global using System.Diagnostics.CodeAnalysis;
 global using System.Text;

@@ -18,4 +18,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="7.0.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Blazr.OWS.ToyShop\Source\Libraries\Blazr.Presentation\Blazr.Presentation.csproj" />
+  </ItemGroup>
+
 </Project>
