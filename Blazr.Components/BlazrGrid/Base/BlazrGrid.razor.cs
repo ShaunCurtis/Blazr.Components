@@ -8,7 +8,7 @@ namespace Blazr.Components.BlazrGrid;
 public partial class BlazrGrid<TGridItem> : BlazrBaseComponent, IComponent, IHandleEvent, IDisposable
     where TGridItem : class, new()
 {
-    [Parameter, EditorRequired] public IBlazrGridContext<TGridItem>? GridContext { get; set; } = default!;
+    [CascadingParameter] public IBlazrListContext<TGridItem> GridContext { get; set; } = default!;
     [Parameter] public RenderFragment? ChildContent { get; set; }
     private IEnumerable<TGridItem> _items => GridContext?.Items ?? Enumerable.Empty<TGridItem>();
 

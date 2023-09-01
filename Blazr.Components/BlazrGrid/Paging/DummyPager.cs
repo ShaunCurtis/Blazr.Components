@@ -6,4 +6,4 @@
 
 namespace Blazr.Components;
 
-public class DummyPager : IListPagerProvider {}
+public class DummyPager {}

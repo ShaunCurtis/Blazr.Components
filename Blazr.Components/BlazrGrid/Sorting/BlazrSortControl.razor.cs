@@ -12,7 +12,7 @@ public sealed partial class BlazrSortControl<TGridItem> : BlazrControlBase, IDis
 {
     private bool showSortingDropdown = false;
 
-    [CascadingParameter] public IBlazrGridContext<TGridItem> GridContext { get; set; } = default!;
+    [CascadingParameter] public IBlazrListContext<TGridItem> GridContext { get; set; } = default!;
 
     [Parameter] public bool IsMaxColumn { get; set; }
 
@@ -27,7 +27,7 @@ public sealed partial class BlazrSortControl<TGridItem> : BlazrControlBase, IDis
     private SortDefinition _currentSorter => this.GridContext.ListState.Sorters.FirstOrDefault();
 
     private bool _isCurrentSortField => !string.IsNullOrWhiteSpace(this.SortField)
-        && _currentSorter.SortField.Equals(SortField);
+        && SortField.Equals(_currentSorter.SortField);
 
     private bool _canSort => !string.IsNullOrWhiteSpace(SortField);
 
@@ -53,7 +53,7 @@ public sealed partial class BlazrSortControl<TGridItem> : BlazrControlBase, IDis
         if (!_canSort)
             return;
 
-        SortRequest request = new() { SortDescending = descending, SortField = this.SortField };
+        SortRequest request = new(SortField, descending);
 
         await this.GridContext.SortAsync(request);
     }

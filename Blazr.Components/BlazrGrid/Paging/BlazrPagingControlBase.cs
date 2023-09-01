@@ -1,5 +1,4 @@
-﻿using Blazr.Components.BlazrGrid;
-/// ============================================================
+﻿/// ============================================================
 /// Author: Shaun Curtis, Cold Elm Coders
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
@@ -7,7 +6,7 @@
 namespace Blazr.Components;
 
 public abstract class BlazrPagingControlBase<TRecord>
-    : BlazrControlBase, IListPagerProvider, IDisposable
+    : BlazrControlBase, IDisposable
     where TRecord : class, new()
 {
     [Parameter] public int BlockSize { get; set; } = 10;
@@ -16,7 +15,7 @@ public abstract class BlazrPagingControlBase<TRecord>
 
     [Parameter] public bool ShowPageOf { get; set; } = true;
 
-    [CascadingParameter] public IBlazrGridContext<TRecord> GridContext { get; set; } = default!;
+    [CascadingParameter] public IBlazrListContext<TRecord> GridContext { get; set; } = default!;
 
     protected override async Task OnParametersSetAsync()
     {
