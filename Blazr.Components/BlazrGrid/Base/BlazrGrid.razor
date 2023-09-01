@@ -18,11 +18,13 @@
 @implements IHandleEvent
 @implements IDisposable
 
-<CascadingValue Value="this.RegisterColumn">
+<CascadingValue Value="this.RegisterColumn" IsFixed>
     @ChildContent
 </CascadingValue>
 
-@this.GridRenderFragment
+<CascadingValue Value="this.GridContext" IsFixed>
+    @this.GridRenderFragment
+</CascadingValue>
 
 @code {
     /// <summary>

@@ -3,6 +3,8 @@
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
 /// ============================================================
+using Blazr.OneWayStreet.Core;
+
 namespace Blazr.Components.BlazrGrid;
 
 public sealed partial class BlazrSortControl<TGridItem> : BlazrControlBase, IDisposable
@@ -10,7 +12,7 @@ public sealed partial class BlazrSortControl<TGridItem> : BlazrControlBase, IDis
 {
     private bool showSortingDropdown = false;
 
-    [CascadingParameter] public IListController<TGridItem>? ListController { get; set; }
+    [CascadingParameter] public IBlazrGridContext<TGridItem> GridContext { get; set; } = default!;
 
     [Parameter] public bool IsMaxColumn { get; set; }
 
@@ -21,17 +23,21 @@ public sealed partial class BlazrSortControl<TGridItem> : BlazrControlBase, IDis
     [Parameter] public string SortField { get; set; } = string.Empty;
 
     private string showCss => showSortingDropdown ? "show" : String.Empty;
-    private IListController<TGridItem> _listController = default!;
+
+    private SortDefinition _currentSorter => this.GridContext.ListState.Sorters.FirstOrDefault();
+
+    private bool _isCurrentSortField => !string.IsNullOrWhiteSpace(this.SortField)
+        && _currentSorter.SortField.Equals(SortField);
+
+    private bool _canSort => !string.IsNullOrWhiteSpace(SortField);
 
     protected override Task OnParametersSetAsync()
     {
-        if (this.ListController is null)
+        if (this.GridContext is null)
             throw new NullReferenceException("There's no cascaded ListController.");
 
-        _listController = this.ListController;
-
         if (NotInitialized)
-            _listController.StateChanged += this.OnStateChanged;
+            this.GridContext.StateChanged += this.OnStateChanged;
 
         return Task.CompletedTask;
     }
@@ -44,30 +50,23 @@ public sealed partial class BlazrSortControl<TGridItem> : BlazrControlBase, IDis
 
     private async Task SortClick(bool descending)
     {
-        var isCurrentSortField = this.IsCurrentSortField();
-        SortRequest request = this.IsCurrentSortField()
-            ? new SortRequest { SortDescending = descending, SortField = _listController.ListState.SortField }
-            : new SortRequest { SortDescending = descending, SortField = this.SortField };
+        if (!_canSort)
+            return;
 
-        await this._listController.NotifySortingRequestedAsync(this, new SortEventArgs { Request = request });
-    }
+        SortRequest request = new() { SortDescending = descending, SortField = this.SortField };
 
-    private bool IsCurrentSortField()
-    {
-        if (string.IsNullOrWhiteSpace(_listController.ListState.SortField))
-            return false;
-
-        return _listController.ListState.SortField.Equals(this.SortField);
+        await this.GridContext.SortAsync(request);
     }
 
     private string GetActive(bool dir)
     {
-        bool sortDescending = _listController.ListState.SortDescending;
+        if (!_isCurrentSortField)
+            return string.Empty;
 
-        if (this.IsCurrentSortField())
-            return dir == sortDescending ? "active" : string.Empty;
+        bool sortDescending = _currentSorter.SortDescending;
 
-        return string.Empty;
+        return dir == sortDescending ? "active" : string.Empty;
+
     }
 
     private string HeaderCss
@@ -76,9 +75,9 @@ public sealed partial class BlazrSortControl<TGridItem> : BlazrControlBase, IDis
          .Build();
 
     private string SortIconCss
-    => _listController is null || !this.IsCurrentSortField()
+    => !_isCurrentSortField
         ? BlazrGridCss.NotSortedClass
-        : _listController.ListState.SortDescending
+        : _currentSorter.SortDescending
             ? BlazrGridCss.AscendingClass
             : BlazrGridCss.DescendingClass;
 
@@ -86,5 +85,5 @@ public sealed partial class BlazrSortControl<TGridItem> : BlazrControlBase, IDis
         => this.StateHasChanged();
 
     public void Dispose()
-        => _listController.StateChanged -= this.OnStateChanged;
+        => this.GridContext.StateChanged -= this.OnStateChanged;
 }

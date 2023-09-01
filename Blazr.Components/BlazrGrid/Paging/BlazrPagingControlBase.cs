@@ -1,4 +1,5 @@
-﻿/// ============================================================
+﻿using Blazr.Components.BlazrGrid;
+/// ============================================================
 /// Author: Shaun Curtis, Cold Elm Coders
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
@@ -15,30 +16,29 @@ public abstract class BlazrPagingControlBase<TRecord>
 
     [Parameter] public bool ShowPageOf { get; set; } = true;
 
-    [CascadingParameter] public IListController<TRecord>? ListController { get; set; }
+    [CascadingParameter] public IBlazrGridContext<TRecord> GridContext { get; set; } = default!;
 
     protected override async Task OnParametersSetAsync()
     {
         if (this.NotInitialized)
         {
-            if (this.ListController is null)
-                throw new NullReferenceException($"No {nameof(this.ListController)} found.");
+            if (this.GridContext is null)
+                throw new NullReferenceException($"No {nameof(this.GridContext)} found.");
 
-            this.ListController.RegisterPager(this);
             await this.SetPageAsync();
 
-            this.ListController.StateChanged += this.OnStateChanged;
+            this.GridContext.StateChanged += this.OnStateChanged;
         }
     }
 
     protected int Page
-        => this.ListController?.ListState.Page ?? 0;
+        => this.GridContext.ListState.StartIndex / this.GridContext.ListState.PageSize;
 
     protected int ListCount
-        => this.ListController?.ListState.ListTotalCount ?? 0;
+        => (int)this.GridContext.TotalCount;
 
     private int PageSize
-        => this.ListController?.ListState.PageSize ?? 10;
+        => this.GridContext.ListState.PageSize;
 
     protected bool hasPages
         => LastPage > 0;
@@ -78,20 +78,7 @@ public abstract class BlazrPagingControlBase<TRecord>
         => LastBlock * this.BlockSize;
 
     protected async Task SetPageAsync(PagingRequest? request = null)
-    {
-        if (this.ListController is not null)
-        {
-            PagingEventArgs eventArgs = new PagingEventArgs(request);
-
-            if (request is null)
-                eventArgs.InitialPageSize = this.DefaultPageSize;
-
-            await this.ListController.NotifyPagingRequestedAsync(this, eventArgs);
-        }
-    }
-
-    protected void OnPagingReset(object? sender, EventArgs e)
-        => this.StateHasChanged();
+        => await this.GridContext.PageAsync(request ?? new PagingRequest() { PageSize = this.DefaultPageSize });
 
     protected void OnStateChanged(object? sender, EventArgs e)
         => this.StateHasChanged();
@@ -128,9 +115,6 @@ public abstract class BlazrPagingControlBase<TRecord>
 
     public void Dispose()
     {
-        if (this.ListController is null)
-            return;
-
-        this.ListController.StateChanged -= this.OnStateChanged;
+        this.GridContext.StateChanged -= this.OnStateChanged;
     }
 }

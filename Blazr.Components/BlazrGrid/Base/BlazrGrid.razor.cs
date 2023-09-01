@@ -5,20 +5,12 @@
 /// ============================================================
 namespace Blazr.Components.BlazrGrid;
 
-// The Component is configured to get it's data set from one of two sources (in order of precidence):
-//   1. The Parameter provided ListContext.
-//   2. The cascaded cascadedListContext instance.
-
 public partial class BlazrGrid<TGridItem> : BlazrBaseComponent, IComponent, IHandleEvent, IDisposable
     where TGridItem : class, new()
 {
-    [CascadingParameter] private IBlazrListContext<TGridItem>? cascadedListContext { get; set; }
-
-    [Parameter] public IBlazrListContext<TGridItem>? ListContext { get; set; }
+    [Parameter, EditorRequired] public IBlazrGridContext<TGridItem>? GridContext { get; set; } = default!;
     [Parameter] public RenderFragment? ChildContent { get; set; }
-
-    private IBlazrListContext<TGridItem>? _listContext { get; set; }
-    private IEnumerable<TGridItem> _items => _listContext?.Items ?? Enumerable.Empty<TGridItem>();
+    private IEnumerable<TGridItem> _items => GridContext?.Items ?? Enumerable.Empty<TGridItem>();
 
     protected readonly List<IBlazrGridColumn<TGridItem>> GridColumns = new();
 
@@ -36,11 +28,9 @@ public partial class BlazrGrid<TGridItem> : BlazrBaseComponent, IComponent, IHan
         // Set the list Controller, prioritizing the Parameter Value
         if (this.NotInitialized)
         {
-            _listContext = ListContext ?? cascadedListContext;
+            ArgumentNullException.ThrowIfNull(GridContext);
 
-            ArgumentNullException.ThrowIfNull(_listContext);
-
-            _listContext.ContextChanged += OnContextChanged;
+            this.GridContext.StateChanged += OnContextChanged;
 
             // Render the component so all the columns can register
             await this.RenderAsync();
@@ -65,7 +55,6 @@ public partial class BlazrGrid<TGridItem> : BlazrBaseComponent, IComponent, IHan
 
     public void Dispose()
     {
-        if (_listContext is not null)
-            _listContext.ContextChanged += OnContextChanged;
+            this.GridContext.StateChanged += OnContextChanged;
     }
 }
